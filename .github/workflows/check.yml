@@ -1,0 +1,29 @@
+name: check
+on:
+  push:
+  pull_request:
+  schedule: [{ cron: "17 6 * * 1" }]
+permissions:
+  contents: read
+jobs:
+  wheel:
+    name: the published wheel · ${{ matrix.os }} · Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: install phloem at this repository's version
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --pre "phloem==$(cat VERSION)" mypy
+      - name: it imports, and says its version
+        run: python -c "import phloem; print(phloem.__version__)"
+      - name: the examples type-check against the installed package
+        run: python -m mypy --strict examples
